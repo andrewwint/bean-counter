@@ -80,7 +80,7 @@ export class BeanCounterStack extends cdk.Stack {
     // whole application. Everything else in this stack is replaceable; this is not.
     const database = new rds.DatabaseInstance(this, 'Database', {
       engine: rds.DatabaseInstanceEngine.postgres({
-        version: rds.PostgresEngineVersion.VER_16_4,
+        version: rds.PostgresEngineVersion.VER_18,
       }),
       // Matches the local docker-compose database, so the same migrations apply.
       instanceType: ec2.InstanceType.of(ec2.InstanceClass.T4G, ec2.InstanceSize.MICRO),
