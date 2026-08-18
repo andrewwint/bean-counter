@@ -1,0 +1,25 @@
+{
+  "name": "bean-counter-infra",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AWS CDK skeleton for bean-counter. NOT DEPLOYED — see README.md before running anything.",
+  "bin": {
+    "bean-counter-infra": "bin/bean-counter.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "synth": "cdk synth",
+    "diff": "cdk diff"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "aws-cdk": "^2.173.4",
+    "ts-node": "^10.9.2",
+    "typescript": "~5.7.2"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "^2.173.4",
+    "constructs": "^10.4.2"
+  }
+}

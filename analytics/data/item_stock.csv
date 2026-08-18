@@ -1,0 +1,8 @@
+item_id,name,category,base_unit,quantity,last_event_at
+bean-huila,Huila,beans,g,11250,2026-08-10T16:00:00.000Z
+bean-sumatra,Sumatra Mandheling,beans,g,4100,2026-08-10T14:05:00.000Z
+bean-yirgacheffe,Yirgacheffe,beans,g,15850,2026-08-10T14:05:00.000Z
+milk-oat,Oat Milk,milk,ml,20500,2026-08-10T14:05:00.000Z
+milk-whole,Whole Milk,milk,ml,12900,2026-08-10T19:30:00.000Z
+cup-12oz,12oz Cup,packaging,each,1610,2026-08-10T14:05:00.000Z
+lid-12oz,12oz Lid,packaging,each,657,2026-08-10T14:05:00.000Z

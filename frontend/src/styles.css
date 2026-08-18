@@ -1,0 +1,222 @@
+/* A chalkboard: dark slate, chalky text, one accent for anything running low. */
+:root {
+  --board: #22282a;
+  --chalk: #eef1ec;
+  --chalk-dim: #9aa5a0;
+  --rule: #3c4548;
+  --low: #f0b429;
+  --error: #ff9b8a;
+  --ok: #8fd694;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--board);
+  color: var(--chalk);
+  font: 16px/1.5 ui-rounded, 'Segoe UI', system-ui, sans-serif;
+}
+
+.app {
+  max-width: 60rem;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 4rem;
+}
+
+.masthead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  border-bottom: 2px solid var(--rule);
+  padding-bottom: 0.5rem;
+}
+
+h1 {
+  font-size: 1.8rem;
+  letter-spacing: 0.04em;
+  margin: 0;
+}
+
+h2 {
+  font-size: 1.1rem;
+  margin: 0 0 0.75rem;
+}
+
+button {
+  font: inherit;
+  color: var(--chalk);
+  background: transparent;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  padding: 0.35rem 0.8rem;
+  cursor: pointer;
+}
+
+button:hover:not(:disabled) {
+  border-color: var(--chalk-dim);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+button.link {
+  border: 0;
+  padding: 0;
+  text-align: left;
+  text-decoration: underline dotted;
+}
+
+input,
+select {
+  font: inherit;
+  color: var(--chalk);
+  background: #1a1f20;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  padding: 0.35rem 0.5rem;
+}
+
+/* Board */
+.board {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.25rem 0;
+}
+
+.board th,
+.board td {
+  text-align: left;
+  padding: 0.5rem 0.4rem;
+  border-bottom: 1px solid var(--rule);
+  font-weight: 400;
+}
+
+.board thead th {
+  color: var(--chalk-dim);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.board .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.board tr.low td.num,
+.board tr.low th {
+  color: var(--low);
+}
+
+.board tr.selected {
+  background: #2b3234;
+}
+
+.flag {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* Ledger */
+.history {
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.history header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.ledger {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.ledger li {
+  display: grid;
+  grid-template-columns: 10rem 7rem 1fr;
+  gap: 0.5rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px dashed var(--rule);
+  font-variant-numeric: tabular-nums;
+}
+
+.ticket-qty {
+  text-align: right;
+}
+
+.ticket-when,
+.ticket-note {
+  color: var(--chalk-dim);
+}
+
+/* Forms */
+.forms {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+  gap: 1.5rem;
+}
+
+.movement {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  padding: 1rem;
+}
+
+.movement label {
+  color: var(--chalk-dim);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-top: 0.4rem;
+}
+
+.movement button[type='submit'] {
+  margin-top: 0.9rem;
+}
+
+.quantity {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.quantity input {
+  flex: 1;
+}
+
+.error {
+  color: var(--error);
+}
+
+.notice {
+  color: var(--ok);
+}
+
+.muted,
+.empty {
+  color: var(--chalk-dim);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

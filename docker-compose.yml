@@ -1,0 +1,30 @@
+# Local development only. Credentials come from .env (see .env.example) and fall back to
+# dev-only defaults.
+#
+# The host port is overridable because 5432 is often already taken by a native Postgres
+# (Homebrew / Postgres.app). .env.example defaults POSTGRES_PORT to 5433 to stay out of its way.
+# Get a shell on the containerised database with:
+#   docker compose exec postgres psql -U beancounter -d beancounter
+
+services:
+  postgres:
+    image: postgres:18
+    container_name: bean-counter-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-beancounter}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-localdev}
+      POSTGRES_DB: ${POSTGRES_DB:-beancounter}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-beancounter} -d ${POSTGRES_DB:-beancounter}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+volumes:
+  postgres-data:

@@ -1,0 +1,133 @@
+{
+  "skill_name": "baton",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Plan and implement a multi-step feature in this repo, and run verification as its own lane.",
+      "expected_output": "A manager-led plan that runs the orchestrator loop (intake → triage → plan → implement → verify) and splits verification into a separate review lane rather than doing everything in one undifferentiated pass.",
+      "files": [],
+      "assertions": [
+        "Establishes the orchestrator loop with explicit steps",
+        "Opens a distinct verification/review lane separate from implementation",
+        "Keeps a single visible owner integrating the lanes"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Fix this one-line typo in the README.",
+      "expected_output": "Recognized as trivial and handled directly on the main path — no triage/plan/verification lanes and no routed-work ceremony for a one-line change. (The lightweight run trail the runtime always writes is expected; the point is no lane orchestration.)",
+      "files": [],
+      "assertions": [
+        "Recognizes the task as trivial and stays on the direct path (does not run the full routed loop)",
+        "Does not spawn subagent lanes for a one-step change"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Two parts of this change touch different modules and can proceed at once. Run them in parallel safely.",
+      "expected_output": "A response that opens disjoint implementation lanes with explicit non-overlapping write scopes so concurrent edits cannot conflict, and states why the parallel split is worth the overhead.",
+      "files": [],
+      "assertions": [
+        "Assigns each lane a disjoint, explicit write set so parallel edits cannot conflict",
+        "States why the parallel split is worth the overhead"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Have a reviewer check the diff for correctness and run the tests, but it must not be able to change any code.",
+      "expected_output": "A verification lane mapped to the read-only code-reviewer agent that can run build/test and review the diff but has no file-mutating tools.",
+      "files": [],
+      "assertions": [
+        "Routes to the code-reviewer lane",
+        "Confirms the lane is read-only (no Edit/Write) and cannot modify the repo",
+        "Returns a structured verdict / findings rather than edits"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "After the change is implemented, open a pull request and post a comment on the linked ticket.",
+      "expected_output": "A response that prepares the PR narrative and ticket draft locally but gates the actual PR creation and ticket comment on explicit user approval, keeping the developer as the credited actor.",
+      "files": [],
+      "assertions": [
+        "Treats PR creation and ticket comment as outward-facing, approval-gated actions",
+        "Drafts the content but does not publish without approval",
+        "Preserves the developer as the credited author"
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "I want to change the auth flow in a repo you haven't seen. Reduce the chance of guessing wrong before editing.",
+      "expected_output": "A discovery / repo-understanding lane (Explore) that maps the runtime, entrypoints, and edit surfaces first, treating discovery as first-class bounded work before implementation begins.",
+      "files": [],
+      "assertions": [
+        "Runs a discovery/repo-understanding pass before editing",
+        "Maps runtime family, modules, and likely edit surfaces",
+        "Defers code changes until the unknowns are reduced"
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "Coordinate the research lane and the implementation lane so they share findings as they work.",
+      "expected_output": "A response that keeps the coordinator (hub-and-spoke) model: lanes report back to the manager, which passes needed context into the next lane's prompt, rather than implying lanes message each other directly.",
+      "files": [],
+      "assertions": [
+        "Mediates cross-lane information through the manager, not peer-to-peer",
+        "Does not promise direct lane-to-lane messaging",
+        "Keeps the manager as the single integration point"
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "Delegate the implementation lane, but this repo has no custom implementer agent defined.",
+      "expected_output": "A response that falls back to the built-in general-purpose subagent for the implementation lane while preserving the same handoff shape and write-scope discipline.",
+      "files": [],
+      "assertions": [
+        "Falls back to general-purpose when the custom lane agent is absent",
+        "Still applies the lane handoff shape (owned files, objective, verification ask)"
+      ]
+    },
+    {
+      "id": 9,
+      "prompt": "The implementation is done but the test suite is failing. Decide whether the work is complete.",
+      "expected_output": "A response that treats failing tests as a verification failure, enters the recover step with a revised strategy, and does not declare the work done.",
+      "files": [],
+      "assertions": [
+        "Does not declare the task complete while tests fail",
+        "Routes to the recover step / backtracks with a revised approach",
+        "Reports the failure with evidence rather than hiding it"
+      ]
+    },
+    {
+      "id": 10,
+      "prompt": "This is substantial multi-step routed work. Explain what trail you keep so it is auditable.",
+      "expected_output": "A response that preserves a proportional run ledger (runId, taskType, target paths, plan, per-lane results, approval decisions, acceptance evidence) and the explicit checkpoints, while keeping the trail light for trivial work.",
+      "files": [],
+      "assertions": [
+        "Describes a run ledger with the core fields and per-lane results",
+        "Names explicit checkpoints (intake-ready → plan-ready → implementation-ready → verified → closed)",
+        "Scales the artifact trail to the size of the work"
+      ]
+    },
+    {
+      "id": 11,
+      "prompt": "I need a focused answer on how a version-sensitive library API should be used in this repo before we rely on it.",
+      "expected_output": "A research lane mapped to the researcher agent that grounds the answer in the repo's actual versions first, cites evidence, and returns a confidence-rated, read-only conclusion.",
+      "files": [],
+      "assertions": [
+        "Routes to the researcher lane (read-only)",
+        "Grounds the answer in the repo's actual versions/manifests before external sources",
+        "Returns a cited answer with a confidence rating"
+      ]
+    },
+    {
+      "id": 12,
+      "prompt": "An automated, repeatable rule: always run the test suite before any change is declared done.",
+      "expected_output": "A response that places the repeatable gate in a Claude Code hook (settings.json) rather than relying on prose the model must remember, while still treating failed tests as a verification failure in the loop.",
+      "files": [],
+      "assertions": [
+        "Recommends a hook for the automated, repeatable gate",
+        "Does not rely solely on skill prose to enforce an always-run rule"
+      ]
+    }
+  ]
+}

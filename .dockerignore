@@ -1,0 +1,23 @@
+# Keeps `docker build` context (and CDK's ecs.ContainerImage.fromAsset staging copy,
+# which honors this file) from pulling in things the backend image never needs —
+# most importantly infra/cdk.out, which lives inside the tree being copied and would
+# otherwise recurse into itself.
+node_modules
+**/node_modules
+**/dist
+**/.venv
+**/__pycache__
+.git
+infra/cdk.out
+infra/node_modules
+analytics
+# frontend/package.json is copied explicitly (npm workspace resolution) — everything
+# else in frontend/ is unused by this image, and .dockerignore can't selectively
+# un-exclude a file once its parent directory is excluded, so exclude by content instead.
+frontend/node_modules
+frontend/dist
+frontend/.vite
+docs
+openspec
+.claude
+.agents

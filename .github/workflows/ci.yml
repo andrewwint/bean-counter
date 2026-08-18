@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: beancounter
+          POSTGRES_PASSWORD: localdev
+          POSTGRES_DB: beancounter
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U beancounter -d beancounter"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgres://beancounter:localdev@localhost:5432/beancounter
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: |
+          npm install
+          npm install --prefix backend
+          npm install --prefix frontend
+
+      - name: Typecheck
+        run: |
+          npm run typecheck --prefix backend
+          npm run typecheck --prefix frontend
+
+      - name: Lint
+        run: |
+          npm run lint --prefix backend
+          npm run lint --prefix frontend
+
+      - name: Migrate
+        run: npm run migrate --prefix backend
+
+      - name: Test
+        run: |
+          npm test --prefix backend
+          npm test --prefix frontend

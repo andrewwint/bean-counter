@@ -1,0 +1,20 @@
+{
+  "mcpServers": {
+    "serena": {
+      "command": "serena",
+      "args": [
+        "start-mcp-server",
+        "--context", "claude-code",
+        "--project-from-cwd",
+        "--transport", "stdio"
+      ],
+      "alwaysLoad": true
+    },
+    "playwright": {
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp@latest"],
+      "alwaysLoad": true
+    }
+  }
+}
+

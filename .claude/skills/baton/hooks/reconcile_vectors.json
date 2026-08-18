@@ -1,0 +1,155 @@
+{
+  "source": "baton reconciled_nongeneric (disposition_gate.py:216) @ cut 22273bf",
+  "predicate": "non-generic subagent_type AND (exact [a-z0-9-]+ token of ref, len>=3  OR  task_id substring of ref, len>=8)",
+  "generics_excluded": [
+    "Explore",
+    "Plan",
+    "code-reviewer",
+    "general-purpose",
+    "implementer",
+    "researcher",
+    "triage"
+  ],
+  "MIN_LANE_TOKEN": 3,
+  "MIN_TASK_ID": 8,
+  "vectors": [
+    {
+      "label": "bundled bare name 'appsec-lane' by NAME token",
+      "ref": "consulted the appsec-lane, independent agent context",
+      "spawns": [
+        [
+          "appsec-lane",
+          "t1"
+        ]
+      ],
+      "expect": true
+    },
+    {
+      "label": "bundled namespaced 'passet:appsec-lane' by NAME (colon splits -> bare token 'appsec-lane' matches? NO: recorded st keeps colon)",
+      "ref": "consulted passet:appsec-lane lane",
+      "spawns": [
+        [
+          "passet:appsec-lane",
+          null
+        ]
+      ],
+      "expect": false
+    },
+    {
+      "label": "bundled namespaced reconciles by opaque ID substring instead",
+      "ref": "passet:appsec-lane (agent subagent toolu_01qmkaxfvdzwz89wr5)",
+      "spawns": [
+        [
+          "passet:appsec-lane",
+          "toolu_01qmkaxfvdzwz89wr5"
+        ]
+      ],
+      "expect": true
+    },
+    {
+      "label": "org 'acme:appsec-reviewer' recorded BARE token matches ref bare token",
+      "ref": "routed to acme appsec-reviewer per agents.md",
+      "spawns": [
+        [
+          "appsec-reviewer",
+          null
+        ]
+      ],
+      "expect": true
+    },
+    {
+      "label": "org 'acme:appsec-reviewer' recorded WITH namespace: name fails (colon token != bare tokens), needs id",
+      "ref": "acme:appsec-reviewer lane, independent",
+      "spawns": [
+        [
+          "acme:appsec-reviewer",
+          null
+        ]
+      ],
+      "expect": false
+    },
+    {
+      "label": "org 'acme:appsec-reviewer' namespace-recorded but ID present in ref -> reconciles by id",
+      "ref": "acme:appsec-reviewer (subagent toolu_abc12345def)",
+      "spawns": [
+        [
+          "acme:appsec-reviewer",
+          "toolu_abc12345def"
+        ]
+      ],
+      "expect": true
+    },
+    {
+      "label": "org specialist with NO appsec in the name at all (name token match) -> still reconciles (name-agnostic)",
+      "ref": "routed to the acme-secaudit lane",
+      "spawns": [
+        [
+          "acme-secaudit",
+          null
+        ]
+      ],
+      "expect": true
+    },
+    {
+      "label": "generic lane 'code-reviewer' named -> NOT a specialist (generic)",
+      "ref": "code-reviewer lane looked at it",
+      "spawns": [
+        [
+          "code-reviewer",
+          "t9"
+        ]
+      ],
+      "expect": false
+    },
+    {
+      "label": "EMPTY ledger (sidecar wired, nothing spawned) -> reconciles to nothing",
+      "ref": "security-review lane, independent context",
+      "spawns": [],
+      "expect": false
+    },
+    {
+      "label": "look-alike: recorded 'security-reviewer' vs ref token 'security-review' -> different token -> False",
+      "ref": "security-review lane",
+      "spawns": [
+        [
+          "security-reviewer",
+          null
+        ]
+      ],
+      "expect": false
+    },
+    {
+      "label": "short recorded name 'sec' cannot substring-match 'secrets' prose -> False",
+      "ref": "secrets egress boundary reviewed",
+      "spawns": [
+        [
+          "sec",
+          null
+        ]
+      ],
+      "expect": false
+    },
+    {
+      "label": "short task_id (< MIN_TASK_ID=8) cannot id-match -> False",
+      "ref": "some lane ref abc123",
+      "spawns": [
+        [
+          "acme-appsec",
+          "abc123"
+        ]
+      ],
+      "expect": false
+    },
+    {
+      "label": "None subagent_type never certifies (even with a matching id)",
+      "ref": "ref carrying toolu_01qmkaxfvdz",
+      "spawns": [
+        [
+          null,
+          "toolu_01qmkaxfvdz"
+        ]
+      ],
+      "expect": false
+    }
+  ]
+}
