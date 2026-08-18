@@ -115,6 +115,11 @@ openspec/    Spec-driven change proposals.
 
 - **`AGENTS.md`** is the single source of truth for working in this repo (rules, targets, tests).
   `CLAUDE.md` and `.github/copilot-instructions.md` are thin pointers to it.
+- **[`CONTRIBUTING.md`](./CONTRIBUTING.md)** — setup, migrations, testing expectations, what CI
+  actually runs, and commit conventions.
+- **[`SECURITY.md`](./SECURITY.md)** — the posture, the known open issues, and the findings that
+  were already fixed. **Read it before you deploy this anywhere:** the API has no authentication
+  of any kind, and the CDK stack would publish it over plaintext HTTP.
 - **`docs/architecture/slice-1-contract.md`** is the data contract: table DDL, event types, the
   read-model formula, the HTTP API.
 
@@ -144,7 +149,8 @@ This is a starter, and the omissions are as considered as the inclusions:
 
 - **Auth and roles.** No login, no barista-vs-manager permissions. Every write is anonymous.
   Real deployments need at minimum a manager role gate on `StockCounted`, since a count overwrites
-  the baseline.
+  the baseline. This is the first item in [`SECURITY.md`](./SECURITY.md), which also lists the
+  other known exposures and the checklist to work through before deploying.
 - **Recipe / BOM depletion.** Selling a latte does not automatically deplete 18 g of beans and
   240 ml of milk. Depletion is recorded directly. Recipe-driven depletion is the natural next
   slice and the event log is already the right shape for it.
