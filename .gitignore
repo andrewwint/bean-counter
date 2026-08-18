@@ -24,4 +24,7 @@ cdk.out/
 # OS
 .DS_Store
 
-# NOTE: .agents/ is deliberately NOT ignored — the run trail is a deliverable.
+# .agents/ holds a session's scratch run trail (Baton), not a deliverable — it is
+# session-scoped, best-effort, and never authoritative for a security disposition.
+# SECURITY.md is the authoritative artifact; do not resurrect this as tracked.
+.agents/

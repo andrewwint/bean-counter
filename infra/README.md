@@ -42,7 +42,7 @@ Two further traps worth naming, because both cost money *after* you think you've
 Internet ──> CloudFront ──> S3 (private)              the React stock board, static files
          └─> ALB (public subnets)
                └─> Fargate service (private subnets)  the Node API, port 3000
-                     └─> RDS Postgres 16 (isolated)   the event log — the system of record
+                     └─> RDS Postgres 18 (isolated)   the event log — the system of record
 ```
 
 Three boundaries, each deliberate:
