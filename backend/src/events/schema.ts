@@ -36,6 +36,19 @@ export function upcast(_eventType: string, version: number, payload: unknown): u
 export const baseUnitSchema = z.enum(['g', 'ml', 'each']);
 
 /**
+ * The upper bound on every quantity in the system.
+ *
+ * `.int()` alone is `Number.isInteger`, which happily accepts 1e19. That value
+ * survives JSON, survives the append, and then overflows `::bigint` in the fold
+ * (migrations/002_item_stock.sql) — the read model can never refresh again and
+ * the log is append-only, so there is no way back. The bound belongs HERE, at
+ * the boundary, and is repeated as a CHECK in migrations/003 in case it is ever
+ * bypassed. MAX_SAFE_INTEGER is well inside int8 and is also the largest value
+ * JSON can round-trip through a double without silently changing.
+ */
+export const MAX_QUANTITY = Number.MAX_SAFE_INTEGER;
+
+/**
  * Every quantity in the system is an integer in a base unit (g / ml / each) and
  * strictly positive. Floats and zero/negative quantities are rejected at the
  * boundary: "1.5 kg" is a UI concern, and a zero-quantity movement is not an
@@ -44,16 +57,23 @@ export const baseUnitSchema = z.enum(['g', 'ml', 'each']);
 const quantitySchema = z
   .number({ invalid_type_error: 'quantity must be a number of base units (g / ml / each)' })
   .int('quantity must be an integer in the base unit — no floats')
-  .positive('quantity must be greater than zero');
+  .positive('quantity must be greater than zero')
+  .max(MAX_QUANTITY, `quantity must be at most ${MAX_QUANTITY}`);
 
-const itemIdSchema = z.string().min(1, 'itemId is required');
+/**
+ * Identifiers and labels are trimmed, and must survive the trim. `min(1)` alone
+ * accepts "   ", which would open a stream whose id is three spaces.
+ */
+const nonBlankString = (message: string) => z.string().trim().min(1, message);
+
+const itemIdSchema = nonBlankString('itemId is required');
 
 export const eventSchemas = {
   ItemDefined: z
     .object({
       itemId: itemIdSchema,
-      name: z.string().min(1),
-      category: z.string().min(1),
+      name: nonBlankString('name is required'),
+      category: nonBlankString('category is required'),
       baseUnit: baseUnitSchema,
     })
     .strict(),
@@ -62,8 +82,8 @@ export const eventSchemas = {
     .object({
       itemId: itemIdSchema,
       quantity: quantitySchema,
-      supplier: z.string().min(1).optional(),
-      lotId: z.string().min(1).optional(),
+      supplier: nonBlankString('supplier cannot be blank').optional(),
+      lotId: nonBlankString('lotId cannot be blank').optional(),
     })
     .strict(),
 
@@ -84,7 +104,8 @@ export const eventSchemas = {
       countedQuantity: z
         .number({ invalid_type_error: 'countedQuantity must be a number of base units' })
         .int('countedQuantity must be an integer in the base unit — no floats')
-        .nonnegative('countedQuantity cannot be negative'),
+        .nonnegative('countedQuantity cannot be negative')
+        .max(MAX_QUANTITY, `countedQuantity must be at most ${MAX_QUANTITY}`),
     })
     .strict(),
 } as const;
@@ -131,6 +152,16 @@ export class ValidationError extends Error {
  * Throws `ValidationError` — never returns a partially-valid event.
  */
 export function validateEvent(body: unknown): ValidatedEvent {
+  // `.strict()` never sees `__proto__`: zod builds its output by assignment, and
+  // assigning that key sets a prototype instead of creating an own property, so
+  // the field vanishes before the unknown-key check runs. The contract says
+  // unknown fields are REJECTED, not silently dropped, so reject it here.
+  if (typeof body === 'object' && body !== null && Object.hasOwn(body, '__proto__')) {
+    throw new ValidationError('INVALID_EVENT', 'invalid event envelope', [
+      { path: ['__proto__'], message: 'unrecognized key: "__proto__"' },
+    ]);
+  }
+
   const envelope = envelopeSchema.safeParse(body);
   if (!envelope.success) {
     throw new ValidationError('INVALID_EVENT', 'invalid event envelope', envelope.error.issues);

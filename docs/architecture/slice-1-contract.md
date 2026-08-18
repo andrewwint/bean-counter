@@ -13,6 +13,10 @@ Node **v22** (`.nvmrc` = `22`). TypeScript, ESM (`"type": "module"`). Package ma
 | Native (Homebrew `postgresql@18`) | **5432** | Live on this machine; db `bean_counter` exists; trust auth |
 | Container (`docker compose`, `postgres:18`) | **5433** | Portable default for a fresh clone and for CI; 5433 because 5432 is taken |
 
+The database is named **`bean_counter`** on both paths (role `beancounter`, tests use
+`bean_counter_test`). One name everywhere: otherwise you migrate one database, inspect the other,
+and read stale numbers with nothing appearing to be broken.
+
 `psql` 18.6 is on PATH (`/usr/local/bin/psql` -> `postgresql@18/18.6`); the versioned path
 `/usr/local/opt/postgresql@18/bin/psql` is the fallback. `make db-check` reports which server
 the current `DATABASE_URL` actually reaches.
@@ -50,6 +54,12 @@ Index on `(stream_id, sequence)`.
 - `StockReceived`  `{ itemId, quantity, supplier?, lotId? }`   quantity > 0
 - `StockDepleted`  `{ itemId, quantity, reason: "sale"|"waste"|"sample" }`  quantity > 0
 - `StockCounted`   `{ itemId, countedQuantity }`  absolute reset, not a delta
+
+Every `quantity` / `countedQuantity` is also bounded **above** by `9007199254740991`
+(`Number.MAX_SAFE_INTEGER`) — enforced by zod and again by a CHECK on `events`. An unbounded
+integer is not merely a bad row: it overflows the `::bigint` cast in the fold, and since the log
+is append-only there is no way to remove it. String fields are trimmed and must be non-empty
+after trimming.
 
 ## Read model: `item_stock` MATERIALIZED VIEW
 Current quantity = the last physical count, plus every delta recorded after it.
@@ -97,7 +107,9 @@ These were genuine holes in this contract's first draft. Recorded so slice 2 doe
 2. **`StockCounted.countedQuantity: 0` is legal.** "We're out of oat milk" is a real observation. The
    `> 0` rule constrains *movement* quantities (`StockReceived` / `StockDepleted`), not an absolute count.
 3. **Payload schemas are `.strict()`** — unknown fields are rejected, not silently dropped. Nothing
-   unvalidated ever enters the log.
+   unvalidated ever enters the log. `__proto__` is the one key `.strict()` cannot see (assigning it
+   sets a prototype instead of creating an own property, so it disappears before the unknown-key
+   check runs); `validateEvent` rejects it explicitly so the rule holds without an exception.
 4. **Only streams with an `ItemDefined` appear in `item_stock`.** The board needs name/category/baseUnit
    to render. A stream with movements but no definition is deliberately invisible, and a test asserts it.
 5. **`sequence` has gaps** after a re-run seed (`ON CONFLICT DO NOTHING` still burns `bigserial` values).

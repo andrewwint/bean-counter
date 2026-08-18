@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ValidationError, validateEvent } from '../src/events/schema.ts';
+import { MAX_QUANTITY, ValidationError, validateEvent } from '../src/events/schema.ts';
 
 /**
  * Validation happens before append, so these never reach the database — that is
@@ -33,6 +33,37 @@ describe('event validation', () => {
 
   it('rejects a quantity that is not a number', () => {
     expectRejected({ type: 'StockReceived', itemId: 'x', quantity: '1500' }, 'INVALID_EVENT');
+  });
+
+  it('rejects a quantity above the safe integer range', () => {
+    // Unbounded ints are the one invalid value that cannot be undone: they
+    // commit, then overflow ::bigint in the fold. See quantity-bounds.test.ts.
+    expectRejected({ type: 'StockReceived', itemId: 'x', quantity: 1e19 }, 'INVALID_EVENT');
+    expectRejected({ type: 'StockReceived', itemId: 'x', quantity: MAX_QUANTITY + 2 }, 'INVALID_EVENT');
+    expectRejected({ type: 'StockCounted', itemId: 'x', countedQuantity: 1e19 }, 'INVALID_EVENT');
+  });
+
+  it('accepts the bound itself', () => {
+    expect(validateEvent({ type: 'StockReceived', itemId: 'x', quantity: MAX_QUANTITY }).payload)
+      .toEqual({ itemId: 'x', quantity: MAX_QUANTITY });
+  });
+
+  it('rejects whitespace-only strings and trims the rest', () => {
+    expectRejected({ type: 'StockReceived', itemId: '   ', quantity: 1 }, 'INVALID_EVENT');
+    expectRejected(
+      { type: 'ItemDefined', itemId: 'x', name: ' ', category: 'c', baseUnit: 'g' },
+      'INVALID_EVENT',
+    );
+
+    const event = validateEvent({ type: 'StockReceived', itemId: '  bean-huila  ', quantity: 1 });
+    expect(event.streamId).toBe('bean-huila');
+  });
+
+  it('rejects __proto__ rather than dropping it', () => {
+    // `.strict()` cannot see this key — zod assigns onto its output object, and
+    // assigning __proto__ sets a prototype instead of adding an own property.
+    const body = JSON.parse('{"type":"StockReceived","itemId":"x","quantity":1,"__proto__":{"a":1}}');
+    expectRejected(body, 'INVALID_EVENT');
   });
 
   it('rejects an unknown event type', () => {
