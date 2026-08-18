@@ -3,6 +3,7 @@ import { cors } from 'hono/cors';
 import { ValidationError } from './events/schema.ts';
 import { events } from './routes/events.ts';
 import { health } from './routes/health.ts';
+import { reconciliation } from './routes/reconciliation.ts';
 import { stock } from './routes/stock.ts';
 
 /** The Vite dev server. Not a blanket `*` — one named origin, dev only. */
@@ -20,6 +21,7 @@ export function createApp(): Hono {
   app.route('/api', health);
   app.route('/api', events);
   app.route('/api', stock);
+  app.route('/api', reconciliation);
 
   app.notFound((c) => c.json({ error: { code: 'NOT_FOUND', message: 'no such route' } }, 404));
 
