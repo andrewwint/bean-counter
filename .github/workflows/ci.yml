@@ -15,17 +15,23 @@ jobs:
         env:
           POSTGRES_USER: beancounter
           POSTGRES_PASSWORD: localdev
-          POSTGRES_DB: beancounter
+          POSTGRES_DB: bean_counter
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U beancounter -d beancounter"
+          --health-cmd "pg_isready -U beancounter -d bean_counter"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
 
     env:
-      DATABASE_URL: postgres://beancounter:localdev@localhost:5432/beancounter
+      DATABASE_URL: postgres://beancounter:localdev@localhost:5432/bean_counter
+      # vitest.config.ts OVERWRITES DATABASE_URL with this one for the suite, and
+      # its default (postgresql://localhost:5432/bean_counter_test) has no
+      # credentials — on a runner that is OS user `runner`, which the service
+      # container has no role for. Set it explicitly or the backend suite cannot
+      # connect at all. test/global-setup.ts creates and drops this database.
+      DATABASE_URL_TEST: postgres://beancounter:localdev@localhost:5432/bean_counter_test
 
     steps:
       - uses: actions/checkout@v4
