@@ -8,7 +8,7 @@ COMPOSE := docker compose
 REQUIRED_NODE_MAJOR := 22
 
 .PHONY: help setup dev db-up db-down db-reset db-check migrate seed test lint typecheck \
-        analytics-export notebook clean check-node
+        analytics-export notebook clean check-node infra-synth
 
 help: ## Show this help
 	@echo "bean-counter — make targets"
@@ -65,7 +65,7 @@ db-check: ## Report which Postgres the current DATABASE_URL actually reaches
 	done; \
 	if [ -z "$$psql_bin" ]; then \
 		echo "No psql on this machine — checking the container instead:"; \
-		$(COMPOSE) exec -T postgres psql -U "$${POSTGRES_USER:-beancounter}" -d "$${POSTGRES_DB:-beancounter}" \
+		$(COMPOSE) exec -T postgres psql -U "$${POSTGRES_USER:-beancounter}" -d "$${POSTGRES_DB:-bean_counter}" \
 			-tAc "select 'container postgres ' || current_setting('server_version')" \
 			|| { echo "Could not reach the container either. Try: make db-up"; exit 1; }; \
 		echo "NOTE: this checked the container directly, not DATABASE_URL."; exit 0; \
@@ -111,6 +111,15 @@ analytics-export: ## Dump the read model to analytics/data/*.parquet (implemente
 
 notebook: ## Launch the analytics notebook server (implemented in analytics/)
 	$(MAKE) -C analytics notebook
+
+infra-synth: check-node ## Render the infra/ CDK stack to cdk.out/ (offline, never touches AWS — see infra/README.md)
+	@echo "infra/ has NEVER been deployed and has NOT been security reviewed — see infra/README.md."
+	@echo "This only renders the CloudFormation template locally; it does not call AWS."
+	cd infra && npx cdk synth --ignore-errors
+	@echo
+	@echo "--ignore-errors was used: any failed context lookup (e.g. AWS credentials) was"
+	@echo "papered over with dummy values, so the template above may not reflect a real"
+	@echo "account/region. Do not treat this as validated input to 'cdk deploy'."
 
 clean: ## Remove build output and installed dependencies
 	rm -rf node_modules backend/node_modules backend/dist frontend/node_modules frontend/dist

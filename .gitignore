@@ -14,6 +14,9 @@ __pycache__/
 .venv/
 .ipynb_checkpoints/
 analytics/data/*.parquet
+# Exports carry real shop data. Ignore every generated shape, not just the one
+# a script happens to write today.
+analytics/data/*.csv
 
 # Infra
 cdk.out/
