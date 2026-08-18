@@ -68,7 +68,7 @@ migration error.
 make db-up               # Postgres 18 in Docker, published on host port 5433
 ```
 
-`DATABASE_URL=postgres://beancounter:localdev@localhost:5433/beancounter` (the `.env.example`
+`DATABASE_URL=postgres://beancounter:localdev@localhost:5433/bean_counter` (the `.env.example`
 default). It publishes **5433**, not 5432, because a native Postgres install very often already
 owns 5432 — change `POSTGRES_PORT` in `.env` if you want a different one. This is the portable
 path and the one CI uses.
@@ -76,7 +76,7 @@ path and the one CI uses.
 Shell into it (no host `psql` required):
 
 ```bash
-docker compose exec postgres psql -U beancounter -d beancounter
+docker compose exec postgres psql -U beancounter -d bean_counter
 ```
 
 ### 2. Native install — if you already have Postgres 18 locally
@@ -95,6 +95,10 @@ Its `psql` may not be on your default `PATH` — the Homebrew binary lives at
 ```
 
 On this project's development machine a `bean_counter` database already exists on that instance.
+
+The database is called `bean_counter` on **both** paths (the role stays `beancounter`), so
+migrating one and inspecting the other cannot quietly show you stale data. Tests use a separate
+`bean_counter_test`.
 
 ## Folder map
 

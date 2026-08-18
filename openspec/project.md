@@ -92,8 +92,8 @@ business question this system exists to answer, and the reason `StockCounted` is
 rather than a correction delta: the count is evidence, and the gap it opens is the finding.
 
 ## Important Constraints
-- **No `psql` binary on this machine.** Go through the container:
-  `docker compose exec postgres psql -U beancounter -d beancounter`
+- **`psql` may or may not be on PATH.** If it is not, go through the container:
+  `docker compose exec postgres psql -U beancounter -d bean_counter`
 - **Node 22 only.** `make setup` fails loudly on anything else.
 - **No secrets in the repo.** `.env` is gitignored; `.env.example` holds local-dev placeholders only.
 - **Nothing in `infra/` is deployed.** No `cdk deploy` or `cdk bootstrap` without a security review

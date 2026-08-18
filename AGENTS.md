@@ -127,7 +127,7 @@ tells you which one your `DATABASE_URL` is actually reaching.
 Container shell:
 
 ```bash
-docker compose exec postgres psql -U beancounter -d beancounter
+docker compose exec postgres psql -U beancounter -d bean_counter
 ```
 
 ## Working agreements for agents
