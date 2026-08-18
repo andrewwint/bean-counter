@@ -21,3 +21,12 @@ docs
 openspec
 .claude
 .agents
+
+# Never stage local credentials into the image build context. The context is the
+# REPO ROOT (ecs.ContainerImage.fromAsset(REPO_ROOT, {file:'backend/Dockerfile'})),
+# so an untracked .env here would otherwise be baked into the container image.
+# .env.example is deliberately NOT excluded — it carries only placeholders.
+.env
+**/.env
+*.pem
+*.key
