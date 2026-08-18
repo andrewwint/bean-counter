@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { appendEventAndRefresh } from '../events/append.ts';
+import { EventIdConflictError, appendEventAndRefresh } from '../events/append.ts';
 import { validateEvent } from '../events/schema.ts';
 import { getItemHistory } from '../readmodel/stock.ts';
 
@@ -22,8 +22,23 @@ events.post('/events', async (c) => {
   // Validate BEFORE append — the log only ever contains valid history.
   const event = validateEvent(body);
 
-  const appended = await appendEventAndRefresh(event);
-  return c.json(appended, 201);
+  let appended;
+  try {
+    appended = await appendEventAndRefresh(event);
+  } catch (error) {
+    // Reusing an eventId for a different fact is the client's mistake, and the
+    // honest answer is to say so rather than swallow the second fact.
+    if (error instanceof EventIdConflictError) {
+      return c.json({ error: { code: 'EVENT_ID_CONFLICT', message: error.message } }, 409);
+    }
+    throw error;
+  }
+
+  // 201 only when this request actually created the event; a replay created
+  // nothing, so it answers 200. The body is identical either way, so a client
+  // that retries cannot tell which of its attempts won — that is the point.
+  const { eventId, sequence } = appended;
+  return appended.replayed ? c.json({ eventId, sequence }, 200) : c.json({ eventId, sequence }, 201);
 });
 
 events.get('/items/:itemId/history', async (c) => {

@@ -70,19 +70,35 @@ qty(item) = coalesce(last StockCounted.countedQuantity, 0)
           - sum(StockDepleted.quantity  where sequence > that count's sequence)
 ```
 Items with no `StockCounted` fold from 0 over all events.
-Refreshed by `REFRESH MATERIALIZED VIEW CONCURRENTLY item_stock` after each append
-(slice 1 does it synchronously; a later slice swaps in an in-transaction projection table).
+Refreshed after each append, **inside the append's transaction** — a plain
+`REFRESH MATERIALIZED VIEW item_stock`, not `CONCURRENTLY`, because Postgres forbids the
+concurrent form inside a transaction block. So a refresh failure rolls the event back and the
+client's `500` truthfully means nothing happened. The price is an `ACCESS EXCLUSIVE` lock for
+the duration of the refresh: readers block and concurrent appends serialise. Acceptable at a
+coffee shop's volume, and it is the projection table (`add-projection-table`) that removes the
+cost, not a looser response contract.
 
 ## HTTP API (backend, port 3000, prefix `/api`)
 | Method | Path | Body / Result |
 | --- | --- | --- |
 | GET  | `/api/health` | `{ status: "ok", db: true }` |
-| POST | `/api/events` | body `{ type, occurredAt?, ...payload }` -> `201 { eventId, sequence }` |
+| POST | `/api/events` | body `{ type, eventId?, occurredAt?, ...payload }` -> `201 { eventId, sequence }`; `200` on replay |
 | GET  | `/api/stock`  | `200 [{ itemId, name, category, baseUnit, quantity, lastEventAt }]` |
 | GET  | `/api/items/:itemId/history` | `200 [{ sequence, eventType, payload, occurredAt }]` |
 
+`eventId` is the **idempotency handle**. A client that retries a request it never saw the
+answer to may name the fact it already sent; naming it twice records it once. Absent, the id is
+generated server-side (what the frontend does today). A replay returns the **original** event's
+`{ eventId, sequence }` with `200` — identical body, different status, because `201 Created`
+would claim this request created something and it did not. Reusing an `eventId` for a
+materially different fact (different type, stream, or payload) is `409 EVENT_ID_CONFLICT`, not
+a silent replay: swallowing a real second delivery is the one failure an inventory log must not
+have. `occurredAt` is excluded from that comparison because it defaults to `now()` when omitted,
+so an honest retry of the same body carries a new timestamp; first write wins.
+
 Errors: `400 { error: { code, message, details? } }`. Validation with **zod**; an invalid
-event is rejected before it reaches the log (the log only ever holds valid history).
+event is rejected before it reaches the log (the log only ever holds valid history). A malformed
+`eventId` is `400 INVALID_EVENT` like any other bad field.
 CORS: allow `http://localhost:5173` in dev only.
 
 ## Frontend (Vite + React + TS, port 5173)
@@ -119,7 +135,7 @@ These were genuine holes in this contract's first draft. Recorded so slice 2 doe
 
 | Limitation | Why it is acceptable now | Where it gets fixed |
 | --- | --- | --- |
-| `REFRESH MATERIALIZED VIEW CONCURRENTLY` on every append is O(whole log) per write | Correct and legible at a coffee shop's volume; the point of slice 1 is that the view is *derived* | `add-projection-table` |
+| A full `REFRESH MATERIALIZED VIEW` on every append is O(whole log) per write, and holds `ACCESS EXCLUSIVE` for its duration | Correct and legible at a coffee shop's volume; the point of slice 1 is that the view is *derived*, and atomicity beats concurrency at one till | `add-projection-table` |
 | `occurredAt` is optional and defaults to `now()` | Fine for live entry; **wrong for backfill** — an omitted `occurredAt` silently skews `lastEventAt` | Make it required in slice 2 |
 | No endpoint exposes the reconciliation gap | The seed makes the gap exist, but it is only discoverable by replaying history by hand — a real product hole, not a slice-1 blocker | Slice 2 (`GET /api/items/:id/reconciliation`) |
 | `POST /api/events` has no auth gate | Deliberate, and under independent security review before close-out | `add-auth-and-roles` |

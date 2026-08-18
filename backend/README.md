@@ -62,11 +62,45 @@ itself: `make analytics-export` runs `analytics/scripts/export.py`, which writes
 CSV-shaped handoff used to live here (`npm run export:csv`); nothing read it, so
 it was removed rather than maintained alongside the one that is real.
 
+## The write path
+
+`POST /api/events` appends and refreshes the read model in **one transaction on
+one connection**. If the refresh fails, the event rolls back — so a `500` means
+nothing happened, and the answer the client gets can never contradict the log.
+The refresh inside that transaction is a plain `REFRESH MATERIALIZED VIEW`, not
+`CONCURRENTLY`, because Postgres forbids the concurrent form inside a
+transaction block; the cost is an `ACCESS EXCLUSIVE` lock for the refresh, which
+blocks board readers and serialises concurrent appends. At one till that is the
+right trade against a response that says "written, but the board may be stale".
+
+### Idempotent retry
+
+The body takes an optional `eventId` (UUID). It is the handle a client uses to
+say *this is the same fact I already sent* — a barista whose "received 12 kg"
+appears to fail presses it again, and an append-only log would otherwise hold
+24 kg forever.
+
+| Case | Answer |
+| --- | --- |
+| No `eventId` | id generated server-side, `201` (unchanged; the frontend sends none) |
+| New `eventId` | appended, `201 { eventId, sequence }` |
+| Replayed `eventId`, same fact | `200` with the **original** `{ eventId, sequence }` — same body shape |
+| Replayed `eventId`, different fact | `409 { error: { code: "EVENT_ID_CONFLICT", … } }` |
+| Malformed `eventId` | `400 INVALID_EVENT` |
+
+Deduplication is the `UNIQUE` index on `event_id` (`INSERT … ON CONFLICT DO
+NOTHING`), never a read-then-write check: retries arrive in parallel and only
+the index can arbitrate. `test/idempotency.test.ts` fires eight at once and
+asserts one row and one shared `sequence`.
+
+`occurredAt` is not part of the "same fact" comparison — it defaults to `now()`
+when omitted, so an honest retry of the same body carries a new timestamp. First
+write wins.
+
 ## Slice-1 simplifications (deliberate, marked in code)
 
-- `REFRESH MATERIALIZED VIEW CONCURRENTLY item_stock` runs **synchronously**
-  after every successful append. Correct and obvious; a later slice swaps in an
-  incremental projection table.
+- The read model is re-folded **synchronously on every append** (O(whole log)).
+  Correct and obvious; a later slice swaps in an incremental projection table.
 - **No authentication** on `POST /api/events`. The place it would attach is
   marked in `src/routes/events.ts`; that boundary is under separate review. Do
   not expose this service beyond localhost until it lands.

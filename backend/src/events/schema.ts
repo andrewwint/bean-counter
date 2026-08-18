@@ -118,10 +118,14 @@ export function isEventType(value: unknown): value is EventType {
   return typeof value === 'string' && Object.hasOwn(eventSchemas, value);
 }
 
-/** The request envelope: `{ type, occurredAt?, ...payload }`. */
+/** The request envelope: `{ type, eventId?, occurredAt?, ...payload }`. */
 const envelopeSchema = z
   .object({
     type: z.string().min(1, 'type is required'),
+    // The idempotency handle: a client that retries names the fact it already
+    // sent, so the retry records it once. Optional — when it is absent the id
+    // is generated server-side, which is what the frontend does today.
+    eventId: z.string().uuid('eventId must be a UUID').optional(),
     occurredAt: z.string().datetime({ offset: true }).optional(),
   })
   .passthrough();
@@ -130,6 +134,8 @@ export interface ValidatedEvent {
   type: EventType;
   streamId: string;
   eventVersion: number;
+  /** Client-supplied idempotency handle; generated at append time when absent. */
+  eventId?: string | undefined;
   /** ISO-8601; defaults to now when the caller does not say when it happened. */
   occurredAt: string;
   payload: Record<string, unknown>;
@@ -167,7 +173,7 @@ export function validateEvent(body: unknown): ValidatedEvent {
     throw new ValidationError('INVALID_EVENT', 'invalid event envelope', envelope.error.issues);
   }
 
-  const { type, occurredAt, ...payload } = envelope.data;
+  const { type, eventId, occurredAt, ...payload } = envelope.data;
   if (!isEventType(type)) {
     throw new ValidationError(
       'UNKNOWN_EVENT_TYPE',
@@ -185,6 +191,7 @@ export function validateEvent(body: unknown): ValidatedEvent {
     type,
     streamId: parsed.data.itemId,
     eventVersion: CURRENT_EVENT_VERSION,
+    eventId,
     occurredAt: occurredAt ?? new Date().toISOString(),
     payload: parsed.data,
   };
