@@ -56,6 +56,13 @@ up short. The shortfall is planted on purpose and is sized like the real thing (
 per espresso shot, a couple of percent of the milk poured), so the notebook has something honest to
 find. Same input, same bytes out, every time.
 
+The item ids, names and categories are exactly the ones `backend/src/seed.ts` writes — the
+vocabulary is defined once, in [`scripts/schema.py`](scripts/schema.py), and both the fixtures and
+the notebook use it, so a section cannot quietly select on a word the real data does not use. The
+quantities are *not* the seed's: this is a fuller week, and it carries one deliberately
+never-counted item (a 16oz cup that arrived mid-week) so that the notebook's cross-check against the
+read model covers the contract's fold-from-zero case on a clean checkout.
+
 The snapshot is a generated artifact and is gitignored — the generator is what's committed. Anything
 that needs the data rebuilds it automatically, so you should never have to think about this.
 
