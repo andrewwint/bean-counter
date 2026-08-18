@@ -14,8 +14,7 @@
     "lint": "eslint .",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "migrate": "node --experimental-strip-types src/migrate.ts",
-    "seed": "node --experimental-strip-types src/seed.ts",
-    "export:csv": "node --experimental-strip-types src/export-readmodel.ts"
+    "seed": "node --experimental-strip-types src/seed.ts"
   },
   "dependencies": {
     "@hono/node-server": "^1.13.7",

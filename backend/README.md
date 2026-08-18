@@ -24,7 +24,6 @@ src/events/append.ts            the only INSERT into events
 src/readmodel/stock.ts          stock board + item history queries, view refresh
 src/routes/                     health, events, stock
 src/seed.ts                     one realistic week, idempotent
-src/export-readmodel.ts         CSV handoff to the analytics lane
 ```
 
 ## Database
@@ -54,19 +53,14 @@ data. `KEEP_TEST_DB=1` keeps it around for inspection.
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run migrate` | apply pending SQL migrations (idempotent) |
 | `npm run seed` | seed the week (idempotent) |
-| `npm run export:csv` | dump `item_stock` for the analytics lane |
 
 ## Analytics handoff
 
-`npm run export:csv` writes `analytics/data/item_stock.csv` at the repo root
-(override with `EXPORT_PATH`). That directory is owned by the analytics lane —
-this service writes into it but never creates it. The equivalent by hand:
-
-```sql
-\copy (SELECT item_id, name, category, base_unit, quantity, last_event_at
-         FROM item_stock ORDER BY category, name)
-  TO 'analytics/data/item_stock.csv' WITH (FORMAT csv, HEADER true)
-```
+The backend does not export anything. The analytics lane reads the database
+itself: `make analytics-export` runs `analytics/scripts/export.py`, which writes
+`analytics/data/*.parquet` — the only format the notebook consumes. A second,
+CSV-shaped handoff used to live here (`npm run export:csv`); nothing read it, so
+it was removed rather than maintained alongside the one that is real.
 
 ## Slice-1 simplifications (deliberate, marked in code)
 
