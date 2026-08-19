@@ -5,6 +5,7 @@
   --chalk-dim: #9aa5a0;
   --rule: #3c4548;
   --low: #f0b429;
+  --short: #ff9b8a;
   --error: #ff9b8a;
   --ok: #8fd694;
   color-scheme: dark;
@@ -124,6 +125,70 @@ select {
   letter-spacing: 0.08em;
 }
 
+/* Tabs */
+.tabs {
+  display: flex;
+  gap: 0.4rem;
+  margin-top: 1rem;
+}
+
+button.tab {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+button.tab.selected {
+  border-color: var(--chalk-dim);
+  background: #2b3234;
+}
+
+/* Shrinkage report — colour is never the only cue; every cell carries a word. */
+.report {
+  margin-bottom: 1.5rem;
+}
+
+.report h2 {
+  margin-top: 1.25rem;
+}
+
+.variance {
+  font-variant-numeric: tabular-nums;
+}
+
+.variance.short {
+  color: var(--short);
+}
+
+.variance.over {
+  color: var(--low);
+}
+
+.variance.level {
+  color: var(--ok);
+}
+
+.variance.uncounted,
+.variance.unknown {
+  color: var(--chalk-dim);
+}
+
+/* A baseline is neither good news nor bad news nor a gap in the data, so it
+   takes none of their colours — the ◆ and the word carry it in greyscale too. */
+.variance.baseline {
+  color: var(--chalk);
+  font-style: italic;
+}
+
+tr.baseline td,
+tr.baseline th {
+  background: rgb(255 255 255 / 4%);
+}
+
+.since {
+  font-size: 0.85rem;
+  margin-bottom: 0;
+}
+
 /* Ledger */
 .history {
   border: 1px solid var(--rule);
@@ -188,6 +253,11 @@ select {
 
 .movement button[type='submit'] {
   margin-top: 0.9rem;
+}
+
+.movement button.retry {
+  align-self: flex-start;
+  margin-top: 0.2rem;
 }
 
 .quantity {

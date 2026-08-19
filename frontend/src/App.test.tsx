@@ -48,12 +48,13 @@ const HISTORY: HistoryEntry[] = [
 
 /** Stand in for the backend, which is a separate lane and may not be running. */
 function mockNetwork(routes: Record<string, unknown>) {
-  const fetchMock = vi.fn(async (input: RequestInfo | URL, _init?: RequestInit) => {
+  const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = String(input);
     const match = Object.keys(routes).find((path) => url.endsWith(path));
     if (match === undefined) throw new TypeError('Failed to fetch');
     return new Response(JSON.stringify(routes[match]), {
-      status: 200,
+      // An append is a 201; only a replay of an `eventId` comes back 200.
+      status: init?.method === 'POST' ? 201 : 200,
       headers: { 'Content-Type': 'application/json' },
     });
   });
@@ -150,6 +151,7 @@ describe('movement forms', () => {
         type: 'StockReceived',
         itemId: 'yirgacheffe',
         quantity: 2500,
+        eventId: expect.any(String),
       });
     });
   });
@@ -173,6 +175,7 @@ describe('movement forms', () => {
         itemId: 'whole-milk',
         quantity: 750,
         reason: 'waste',
+        eventId: expect.any(String),
       });
     });
   });

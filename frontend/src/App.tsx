@@ -1,15 +1,20 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ItemHistory } from './components/ItemHistory.tsx';
 import { MovementForm } from './components/MovementForm.tsx';
+import { ShrinkageReport } from './components/ShrinkageReport.tsx';
 import { StockBoard } from './components/StockBoard.tsx';
 import { API_URL, ApiError, UNREACHABLE, getStock } from './lib/api.ts';
 import type { StockItem } from './lib/types.ts';
+
+/** The board is what is on the shelf; the report is what went missing. */
+type View = 'board' | 'shrinkage';
 
 export function App() {
   const [items, setItems] = useState<StockItem[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  const [view, setView] = useState<View>('board');
 
   const load = useCallback(async () => {
     setError(null);
@@ -42,28 +47,55 @@ export function App() {
         </button>
       </header>
 
-      {error !== null && (
-        <p className="error" role="alert">
-          {error}
-        </p>
-      )}
-      {error === null && items === null && <p className="muted">Reading the board…</p>}
-      {items !== null && (
-        <StockBoard items={items} selectedItemId={selectedItemId} onSelect={setSelectedItemId} />
+      <nav className="tabs" role="tablist" aria-label="Views">
+        {(['board', 'shrinkage'] as const).map((candidate) => (
+          <button
+            key={candidate}
+            type="button"
+            role="tab"
+            id={`tab-${candidate}`}
+            aria-selected={view === candidate}
+            aria-controls={`panel-${candidate}`}
+            className={`tab${view === candidate ? ' selected' : ''}`}
+            onClick={() => setView(candidate)}
+          >
+            {candidate === 'board' ? 'Stock board' : 'Shrinkage'}
+          </button>
+        ))}
+      </nav>
+
+      {view === 'board' && (
+        <div role="tabpanel" id="panel-board" aria-labelledby="tab-board">
+          {error !== null && (
+            <p className="error" role="alert">
+              {error}
+            </p>
+          )}
+          {error === null && items === null && <p className="muted">Reading the board…</p>}
+          {items !== null && (
+            <StockBoard items={items} selectedItemId={selectedItemId} onSelect={setSelectedItemId} />
+          )}
+
+          {selected !== null && (
+            <ItemHistory
+              item={selected}
+              reloadKey={reloadKey}
+              onClose={() => setSelectedItemId(null)}
+            />
+          )}
+
+          <div className="forms">
+            <MovementForm kind="receive" items={items ?? []} onRecorded={refresh} />
+            <MovementForm kind="waste" items={items ?? []} onRecorded={refresh} />
+          </div>
+        </div>
       )}
 
-      {selected !== null && (
-        <ItemHistory
-          item={selected}
-          reloadKey={reloadKey}
-          onClose={() => setSelectedItemId(null)}
-        />
+      {view === 'shrinkage' && (
+        <div role="tabpanel" id="panel-shrinkage" aria-labelledby="tab-shrinkage">
+          <ShrinkageReport reloadKey={reloadKey} />
+        </div>
       )}
-
-      <div className="forms">
-        <MovementForm kind="receive" items={items ?? []} onRecorded={refresh} />
-        <MovementForm kind="waste" items={items ?? []} onRecorded={refresh} />
-      </div>
     </main>
   );
 }
