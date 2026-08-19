@@ -122,6 +122,8 @@ openspec/    Spec-driven change proposals.
   of any kind, and the CDK stack would publish it over plaintext HTTP.
 - **`docs/architecture/slice-1-contract.md`** is the data contract: table DDL, event types, the
   read-model formula, the HTTP API.
+- **[`docs/how-this-was-built.md`](./docs/how-this-was-built.md)** — the build narrative: the
+  CQRS-vs-single-Postgres decision, what independent review found, and a from-scratch setup guide.
 
 ## The architecture decision: Postgres only
 
