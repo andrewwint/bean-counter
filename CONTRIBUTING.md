@@ -13,6 +13,49 @@ with known, documented exposures.
 **Node 22** is required and pinned in `.nvmrc`. Many machines default to Node 18, and Vite 6+ /
 Next 15+ reject it outright — usually with an error that does not say "wrong Node version."
 
+### Installing Node, Docker, and friends
+
+If you already have Node 22 (via `nvm`) and Docker, skip to
+[Get the code](#get-the-code). Otherwise:
+
+**macOS:**
+
+```bash
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
+nvm install 22
+brew install --cask docker        # Postgres runs in a container
+curl -LsSf https://astral.sh/uv/install.sh | sh   # only needed for the analytics notebook
+```
+
+**Windows:** use WSL2. The repo drives everything through a Makefile, and `make` is not native to
+Windows — Docker Desktop uses WSL2 as its backend anyway, so this isn't an extra dependency, just
+the right place to run the rest of these commands.
+
+```powershell
+wsl --install -d Ubuntu           # PowerShell, as Administrator
+```
+
+Then install Docker Desktop, enable **Settings → Resources → WSL Integration** for your distro,
+and run the macOS commands above inside the WSL terminal — plus `sudo apt install -y make`.
+
+### Get the code
+
+Fork it if you plan to build on it, so you keep your own history:
+
+```bash
+gh repo fork andrewwint/bean-counter --clone
+cd bean-counter
+```
+
+Clone it directly if you're just reading and running it:
+
+```bash
+git clone https://github.com/andrewwint/bean-counter.git
+cd bean-counter
+```
+
+### First run
+
 ```bash
 nvm use                  # switch to the pinned Node 22
 cp .env.example .env     # local-dev placeholders, safe as-is
@@ -61,6 +104,21 @@ make migrate
 make seed                # a realistic week of events, including a count that comes up short
 make dev                 # Postgres + backend (3000) + frontend (5173)
 ```
+
+Open <http://localhost:5173>. You should see a stock board with seven items. Switch to the
+Shrinkage tab: Whole Milk is short 0.9 L, Yirgacheffe short 350 g. That gap is seeded
+deliberately — it's the question the whole app exists to answer.
+
+### When it breaks
+
+- **`ERROR: Node 22.x is required`** — you skipped `nvm use`. It is not automatic per terminal;
+  run it again in any new shell.
+- **Port 5432 already in use** — you have a local Postgres. The container publishes 5433 on
+  purpose. Run `make db-check`; it reports which Postgres your `DATABASE_URL` actually reaches,
+  which is the single most confusing failure in this stack.
+- **Board shows "internal error"** — the frontend is up and the API isn't. Check that `make db-up`
+  succeeded and Docker is running.
+- **Stale data after pulling** — `make db-reset && make seed`.
 
 ## 2. Two domain rules that are not negotiable
 
@@ -200,6 +258,32 @@ documents drift by week three, and then nobody knows which one is lying.
 `.claude/skills/baton/` is a **vendored copy** of the Baton skill
 (<https://github.com/andrewwint/baton>). Treat it as read-only here: fix things upstream and
 re-vendor rather than editing the copy.
+
+### Starter prompts
+
+With Claude Code, start with a tour rather than a change:
+
+```
+/baton read AGENTS.md and docs/architecture/slice-1-contract.md, then give me a
+tour of this repo: where the event log lives, how item_stock is derived, and
+what the four openspec proposals are for
+```
+
+Then pick real work — the proposals in `openspec/changes/` are already specced:
+
+```
+/baton implement openspec/changes/add-recipe-bom-depletion. Read its design.md
+first; the recipe-version pinning decision is load-bearing. Run verification in
+its own lane.
+```
+
+With Copilot or Codex, they read `AGENTS.md` automatically — point them at the contract and the
+two rules that can't be broken instead:
+
+```
+Read AGENTS.md and docs/architecture/slice-1-contract.md before changing anything.
+Quantities are integers in a base unit. The events table is append-only.
+```
 
 When you re-vendor it — or vendor anything else — **exclude `.env`**. A copy that excluded only
 `.git` once brought a live API key into this tree. See the first entry under "Fixed, with the

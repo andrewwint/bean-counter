@@ -31,6 +31,10 @@ inventory tools quietly overwrite it.
   [Two ways to run Postgres](#two-ways-to-run-postgres).)
 - **make**.
 
+Don't have Node 22 or Docker installed yet? [`CONTRIBUTING.md`](./CONTRIBUTING.md#1-prerequisites-and-setup)
+has copy-pasteable install steps for macOS and Windows (WSL2), plus a fork-vs-clone note and a
+troubleshooting table for the most common first-run failures.
+
 ## Quickstart
 
 ```bash
@@ -110,7 +114,8 @@ infra/       Deployment scaffolding.
 docs/        Architecture. Start with docs/architecture/slice-1-contract.md.
 openspec/    Spec-driven change proposals.
 .claude/     Vendored Baton skill (see AGENTS.md).
-.agents/     Run trail from agent sessions — committed on purpose.
+.agents/     Session-scoped scratch trail from agent runs — gitignored, not a deliverable.
+             SECURITY.md is the authoritative security record.
 ```
 
 - **`AGENTS.md`** is the single source of truth for working in this repo (rules, targets, tests).
