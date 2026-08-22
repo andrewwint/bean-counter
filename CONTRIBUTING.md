@@ -93,6 +93,10 @@ Two Postgres installs on one machine is the normal case, not the odd one: a nati
 its way. Both are supported. The failure mode is running migrations against one and reading from
 the other, which looks like "my data vanished."
 
+**Docker Desktop must already be running before this step.** `make db-up` talks to the Docker
+daemon; if it isn't running yet, this fails with a connection-refused error that looks like a
+bean-counter problem and isn't one.
+
 ```bash
 make db-up               # start the container (published on 5433)
 make db-check            # report which server DATABASE_URL actually reached

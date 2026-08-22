@@ -42,10 +42,16 @@ troubleshooting table for the most common first-run failures.
 > [CONTRIBUTING.md](./CONTRIBUTING.md#1-prerequisites-and-setup).
 
 ```bash
+# 1. Start Docker Desktop — `make db-up` needs it running, and fails with a
+#    connection-refused error otherwise.
+# 2. Then, from a terminal:
 nvm use                  # switch to Node 22 (see .nvmrc)
 cp .env.example .env     # local-dev placeholders, safe to use as-is
 make setup               # verify Node, install backend + frontend deps
-make dev                 # Postgres + backend + frontend
+make db-up               # start Postgres in Docker (needs Docker Desktop running)
+make migrate && make seed  # schema + a realistic week: deliveries, a busy Saturday,
+                            # one waste event, and a Monday count that comes up short
+make dev                 # backend (3000) + frontend (5173)
 ```
 
 Then:
@@ -53,14 +59,8 @@ Then:
 - Frontend (the stock board): <http://localhost:5173>
 - API: <http://localhost:3000/api/stock>
 
-First boot with data:
-
-```bash
-make db-check            # confirm DATABASE_URL reaches the Postgres you think it does
-make migrate
-make seed                # a realistic week: deliveries, a busy Saturday, one waste event,
-                         # and a Monday count that comes up short
-```
+If a database result surprises you, `make db-check` reports which Postgres your `DATABASE_URL`
+actually reaches.
 
 `make help` lists every target. Everything you need to do in this repo has a `make` target.
 

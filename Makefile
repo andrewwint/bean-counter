@@ -36,7 +36,8 @@ setup: check-node ## Check Node version and install backend + frontend dependenc
 	npm install
 	cd backend && npm install
 	cd frontend && npm install
-	@echo "Setup complete. Next: cp .env.example .env && make db-up && make db-check"
+	@echo "Setup complete. Next: start Docker Desktop, then:"
+	@echo "  make db-up && make migrate && make seed && make dev"
 
 dev: db-up ## Start Postgres, then run backend and frontend together
 	@set -a; [ -f .env ] && . ./.env; set +a; \
