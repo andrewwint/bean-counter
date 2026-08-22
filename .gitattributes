@@ -1,0 +1,4 @@
+# Force LF everywhere, regardless of platform or local git config. Without this, a
+# Windows checkout can give Makefile/shell/SQL files CRLF line endings, and `make`
+# or bash then fails on them with a cryptic `$'\r': command not found`.
+* text=auto eol=lf

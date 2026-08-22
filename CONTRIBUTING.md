@@ -29,14 +29,28 @@ curl -LsSf https://astral.sh/uv/install.sh | sh   # only needed for the analytic
 
 **Windows:** use WSL2. The repo drives everything through a Makefile, and `make` is not native to
 Windows — Docker Desktop uses WSL2 as its backend anyway, so this isn't an extra dependency, just
-the right place to run the rest of these commands.
+the right place to run the rest of these commands. **Every command in this guide runs inside the
+WSL2 Ubuntu terminal, never in PowerShell or cmd.**
 
 ```powershell
 wsl --install -d Ubuntu           # PowerShell, as Administrator
 ```
 
-Then install Docker Desktop, enable **Settings → Resources → WSL Integration** for your distro,
-and run the macOS commands above inside the WSL terminal — plus `sudo apt install -y make`.
+Install Docker Desktop and enable **Settings → Resources → WSL Integration** for your distro.
+Then, **inside the WSL2 Ubuntu terminal**:
+
+```bash
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
+nvm install 22                    # do NOT `sudo apt install nodejs` — it installs an old,
+                                   # unpinned version and shadows the one nvm just gave you
+sudo apt install -y make build-essential
+curl -LsSf https://astral.sh/uv/install.sh | sh   # only needed for the analytics notebook
+```
+
+If `make db-up` reports the container is healthy but nothing on `localhost` answers, double-check
+**Docker Desktop → Settings → Resources → WSL Integration** is actually toggled on for your
+distro — WSL2's network path to Docker Desktop depends on it, and a container can be running and
+still be unreachable from the WSL2 terminal without it.
 
 ### Get the code
 
@@ -118,6 +132,9 @@ deliberately — it's the question the whole app exists to answer.
   which is the single most confusing failure in this stack.
 - **Board shows "internal error"** — the frontend is up and the API isn't. Check that `make db-up`
   succeeded and Docker is running.
+- **On WSL2: `make db-up` succeeds but nothing on `localhost` answers** — check
+  **Docker Desktop → Settings → Resources → WSL Integration** is enabled for your distro. Without
+  it, WSL2's route to Docker Desktop's `localhost` forwarding doesn't exist.
 - **Stale data after pulling** — `make db-reset && make seed`.
 
 ## 2. Two domain rules that are not negotiable

@@ -37,6 +37,10 @@ troubleshooting table for the most common first-run failures.
 
 ## Quickstart
 
+> **Windows:** run every command below inside a **WSL2 Ubuntu terminal**, not PowerShell —
+> `make` is not a Windows command. Two-minute WSL2 + Docker Desktop setup:
+> [CONTRIBUTING.md](./CONTRIBUTING.md#1-prerequisites-and-setup).
+
 ```bash
 nvm use                  # switch to Node 22 (see .nvmrc)
 cp .env.example .env     # local-dev placeholders, safe to use as-is
