@@ -9,6 +9,45 @@ events, not a shrug.
 
 It is a starter template. Clone it, run it, and read the log.
 
+## The build: spike, then stabilize
+
+This repository accompanies the article
+**["Your AI Code Works on the First Try. That's Why It's Not a Portfolio Project."](https://medium.com/@andrewwint/what-a-senior-engineer-actually-reads-in-your-portfolio-project-52cdfe5b41d1)**
+
+Building a working web app with AI now takes under an hour. Generating code isn't the scarce skill
+anymore — what a senior reviewer actually evaluates is engineering judgment: defending a trade-off,
+naming a gap before someone else finds it, and correcting what turns out to be wrong.
+
+**Hour 1: the spike.** Move fast to explore the domain. This repo is the result: an event-sourced
+coffee-shop inventory tracker where every mutation flows through an append-only `events` log, and
+current stock is folded into a disposable materialized view (`item_stock`).
+
+**Hour 2: the stabilize.** 127 passing tests is not the finish line. Independent, cold-read
+security and architecture reviews — run through [Baton](https://github.com/andrewwint/baton) —
+caught real, non-syntax exposures:
+
+- The server bound `0.0.0.0` (every network interface) while three documents claimed
+  localhost-only.
+- An unbounded integer quantity that, once committed to the append-only log, permanently broke the
+  materialized-view refresh.
+- A spec that scored an item's opening inventory count as overage rather than a baseline —
+  swamping a real 350 g shortfall with a false 12 kg surplus.
+
+**Structural enforcement beats prose.** The reviews above ran because a hook made them mandatory —
+not because a document asked nicely. An instruction that exists only as a sentence in `AGENTS.md`
+is exactly as reliable as any other unenforced claim in this repo (see `SECURITY.md`'s "Fixed,
+with the lesson" for three more of those, found the same way).
+
+**Use this repository:**
+
+1. Clone it and follow the [Quickstart](#quickstart) below, then open the **Shrinkage** tab —
+   that's the real inventory discrepancy the event fold exposes.
+2. Read [`SECURITY.md`](./SECURITY.md) for the full audit trail: what was found, what was fixed,
+   and what's still open.
+3. Delete the coffee shop. Keep the harness — `.claude/`, `AGENTS.md`, `Makefile` — and build your
+   own project stabilized the same way. `docs/how-this-was-built.md` has the full narrative if you
+   want the mechanics of how this one got there.
+
 ## The coffee-shop analogy
 
 Event sourcing is how a busy café already works. The vocabulary is the only new part.
@@ -25,15 +64,20 @@ inventory tools quietly overwrite it.
 
 ## Prerequisites
 
-- **Node v22** — pinned in `.nvmrc`. Many machines default to Node 18; `make setup` will stop you
-  if the active version is wrong.
-- **Docker** with Compose v2 — Postgres 18 runs in a container. (Or a native Postgres 18; see
-  [Two ways to run Postgres](#two-ways-to-run-postgres).)
-- **make**.
+New to one of these? Click through, install it, then come back — full copy-pasteable commands
+for macOS and Windows (WSL2) are in [`CONTRIBUTING.md`](./CONTRIBUTING.md#1-prerequisites-and-setup).
 
-Don't have Node 22 or Docker installed yet? [`CONTRIBUTING.md`](./CONTRIBUTING.md#1-prerequisites-and-setup)
-has copy-pasteable install steps for macOS and Windows (WSL2), plus a fork-vs-clone note and a
-troubleshooting table for the most common first-run failures.
+- [ ] **[nvm](https://github.com/nvm-sh/nvm)**, then `nvm install 22`. This repo pins **Node 22**
+  (`.nvmrc`) — many machines default to Node 18, and `make setup` will stop you if the active
+  version is wrong. Use `nvm`, not a plain [nodejs.org](https://nodejs.org) installer: `nvm` is
+  what lets you switch to the version a project pins, instead of having one global Node everywhere.
+- [ ] **[Docker Desktop](https://www.docker.com/products/docker-desktop/)** — Postgres 18 runs in
+  a container. Install it, then **make sure it's actually open and running** before you start:
+  the single most common first-run failure is `make db-up` failing with a connection-refused
+  error because Docker Desktop isn't running yet. (Already have a native Postgres 18 instead? See
+  [Two ways to run Postgres](#two-ways-to-run-postgres) — you can skip Docker.)
+- [ ] **`make`** — already installed on macOS and Linux. On Windows, it comes from WSL2/Ubuntu;
+  see [CONTRIBUTING.md](./CONTRIBUTING.md#1-prerequisites-and-setup) for the two-minute setup.
 
 ## Quickstart
 
